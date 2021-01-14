@@ -36,6 +36,17 @@ class Atividades(Base):
     pessoa_id = Column(Integer, ForeignKey('pessoas.id'))
     pessoa = relationship("Pessoas")
 
+    def save(self):
+        db_session.add(self)
+        db_session.commit()
+
+
+    def delete(self):
+        db_session.delete(self)
+        db_session.commit()
+
+    def __repr__(self):
+        return '<Atividade {}>'.format(self.nome)
 
 def init_db():
     Base.metadata.create_all(bind=engine)

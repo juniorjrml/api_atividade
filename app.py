@@ -74,15 +74,12 @@ class Pessoa(Resource):
 
 class ListaPessoas(Resource):
     def get(self):
-        lista_retorno = {}
-        for p in Pessoas.query.all():
-            pessoa = {
-                'idade': p.idade,
-                'id': p.id
-            }
-            lista_retorno[p.nome] = pessoa
+        pessoas = Pessoas.query.all()
+        response = [
 
-        return lista_retorno
+            {'idade': p.idade, 'id': p.id, 'nome': p.nome} for p in pessoas]
+
+        return response
 
     def post(self):
         dados = json.loads(request.data)
@@ -94,8 +91,40 @@ class ListaPessoas(Resource):
         return ESTADO
 
 
+class ListaAtividades(Resource):
+    def get(self):
+        atividades = Atividades.query.all()
+        response = []
+        for a in atividades:
+            try:
+                response.append({"nome": a.nome, "pessoa": a.pessoa.nome})
+            except AttributeError:
+                ESTADO["status"] = FALHA
+                ESTADO["mensagem"] = "registro invalido id = {}".format(a.id)
+                response.append(ESTADO)
+
+        return response
+
+    def post(self):
+        dados = json.loads(request.data)
+        print(dados)
+        pessoa = Pessoas.query.filter_by(nome=dados["pessoa"]).first()
+        try:
+            pessoa.nome
+            atividade = Atividades(nome=dados["nome"], pessoa=pessoa)
+            atividade.save()
+            pessoa.save()
+            ESTADO["status"] = SUCESSO
+            ESTADO["mensagem"] = "Registro incluido com sucesso"
+        except AttributeError:
+            ESTADO["status"] = FALHA
+            ESTADO["mensagem"] = "Falha ao incluir Registro"
+
+        return ESTADO
+
 api.add_resource(Pessoa, '/pessoa/<string:nome>')
 api.add_resource(ListaPessoas, '/pessoa/')
+api.add_resource(ListaAtividades, '/atividade/')
 
 if __name__ == '__main__':
     app.run(debug=True)
