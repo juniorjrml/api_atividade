@@ -1,15 +1,13 @@
-from models import Pessoas
+from models import Pessoas, Usuarios
 
-def insere_pessoa():
-    pessoa = Pessoas(nome='Jan', idade=26)
-    pessoa.save()
+def insere_usuario(username, senha):
+    usuarios = Usuarios(login=username, password=senha)
+    usuarios.save()
 
 
-
-def consulta_pessoa():
-    pessoa = Pessoas.query.all()
-    for i in pessoa:
-        print(i, i.idade)
+def consulta_usuarios():
+    usuarios = Usuarios.query.all()
+    return [{"id": u.id, "login": u.login} for u in usuarios]
 
 
 def altera_pessoa():
@@ -24,7 +22,6 @@ def deleta_pessoa():
 
 
 if __name__ == '__main__':
-    consulta_pessoa()
-    deleta_pessoa()
-    #insere_pessoa()
-    consulta_pessoa()
+    #insere_usuario('juniorjrml', 'aaa')
+    #insere_usuario('jan', 'bbb')
+    print(consulta_usuarios())

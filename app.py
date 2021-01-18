@@ -2,17 +2,27 @@ import json
 
 from flask import Flask, request
 from flask_restful import Resource, Api
-from models import Pessoas, Atividades
+from models import Pessoas, Atividades, Usuarios
+from flask_httpauth import HTTPBasicAuth
 
 
+auth = HTTPBasicAuth()
 app = Flask(__name__)
 api = Api(app)
+
+
+
+@auth.verify_password
+def verification(login, password):
+    if not (login, password):
+        return False
+    return Usuarios.query.filter_by(login=login, password=password)
+
 SUCESSO = "sucesso"
 FALHA = "falha"
 ESTADO = {"status": FALHA, "mensagem": "Erro Desconhecido"}
 
 class Pessoa(Resource):
-
     def get(self, nome):
         try:
             pessoa = Pessoas.query.filter_by(nome=nome).first()
@@ -21,17 +31,20 @@ class Pessoa(Resource):
                 'idade': pessoa.idade,
                 'id': pessoa.id
             }
+            n_status = 200
 
         except AttributeError:
             ESTADO["mensagem"] = "Registro não localizado"
             ESTADO["status"] = FALHA
             response = ESTADO
+            n_status = 404
 
         except Exception:
             response = ESTADO
+            n_status = 400
 
-        return response
-
+        return response, n_status
+    @auth.login_required
     def put(self, nome):
         try:
             dados = json.loads(request.data)
@@ -52,7 +65,7 @@ class Pessoa(Resource):
             response = ESTADO
 
         return response
-
+    @auth.login_required
     def delete(self, nome):
         try:
             pessoa = Pessoas.query.filter_by(nome=nome).first()
@@ -80,7 +93,7 @@ class ListaPessoas(Resource):
             {'idade': p.idade, 'id': p.id, 'nome': p.nome} for p in pessoas]
 
         return response
-
+    @auth.login_required
     def post(self):
         dados = json.loads(request.data)
         print(dados)
@@ -92,6 +105,7 @@ class ListaPessoas(Resource):
 
 
 class ListaAtividades(Resource):
+
     def get(self):
         atividades = Atividades.query.all()
         response = []
@@ -104,7 +118,7 @@ class ListaAtividades(Resource):
                 response.append(ESTADO)
 
         return response
-
+    @auth.login_required
     def post(self):
         dados = json.loads(request.data)
         print(dados)
