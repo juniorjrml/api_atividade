@@ -1,7 +1,7 @@
 import json
 
 from flask import Flask, request
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, marshal_with, fields
 from models import Pessoas, Atividades, Usuarios
 from flask_httpauth import HTTPBasicAuth
 
@@ -21,6 +21,12 @@ def verification(login, password):
 SUCESSO = "sucesso"
 FALHA = "falha"
 ESTADO = {"status": FALHA, "mensagem": "Erro Desconhecido"}
+
+campos_pessoa = {
+    "nome": fields.String(40),
+    "idade": fields.Integer
+}
+
 
 class Pessoa(Resource):
     def get(self, nome):
