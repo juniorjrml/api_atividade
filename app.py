@@ -5,7 +5,18 @@ from flask_restful import Resource, Api, marshal_with, fields, reqparse
 from models import Pessoas, Atividades, Usuarios
 from flask_httpauth import HTTPBasicAuth
 
+def converter_para_tipo_do_elemento(x):
+    try:
+        return int(x)
+    except ValueError:
+        try:
+            return float(x)
+        except ValueError:
+            return x
 
+
+
+auth = HTTPBasicAuth()
 app = Flask(__name__)
 api = Api(app)
 
@@ -15,14 +26,22 @@ FALHA = "falha"
 ESTADO = {"status": FALHA, "mensagem": "Erro Desconhecido"}
 
 pessoa_post_args = reqparse.RequestParser()
-pessoa_post_args.add_argument("nome", type=str, help="Nome da Pessoa a cadastrar", required=True)
-pessoa_post_args.add_argument("idade", type=int, help="Idade da Pessoa a cadastrar", required=True)
+pessoa_post_args.add_argument(
+    'nome', type=str, help="Nome da Pessoa a cadasTrar", required=True)
+pessoa_post_args.add_argument(
+    'idade', type=int, help="Idade da Pessoa a cadastrar", required=True)
 
 campos_pessoa = {
     "nome": fields.String(40),
     "idade": fields.Integer
 }
 
+@auth.verify_password
+def autentica_usuario(login, senha):
+    if not (login, senha):
+        return False
+    else:
+        return Usuarios.query.filter_by(login=login, password=senha).first()
 
 class Pessoa(Resource):
     def get(self, nome):
@@ -33,6 +52,7 @@ class Pessoa(Resource):
                 'idade': pessoa.idade,
                 'id': pessoa.id
             }
+            print(pessoa)
             n_status = 200
 
         except AttributeError:
@@ -47,6 +67,8 @@ class Pessoa(Resource):
 
         return response, n_status
 
+
+    @auth.login_required
     def put(self, nome):
         try:
             dados = json.loads(request.data)
@@ -72,6 +94,8 @@ class Pessoa(Resource):
 
         return response, n_status
 
+
+    @auth.login_required
     def delete(self, nome):
         try:
             pessoa = Pessoas.query.filter_by(nome=nome).first()
@@ -97,15 +121,27 @@ class Pessoa(Resource):
 class ListaPessoas(Resource):
     def get(self):
         pessoas = Pessoas.query.all()
-        response = [
-            {'idade': p.idade, 'id': p.id, 'nome': p.nome} for p in pessoas]
-        return response, 200
+        response = []
+        n_status = 404
+        for p in pessoas:
+            try:
+                n_status = 200
+                response.append({'idade': p.idade, 'id': p.id, 'nome': p.nome})
+            except:
+                ESTADO["mensagem"] = "Registro não localizado"
+                ESTADO["status"] = FALHA
+                response.append(ESTADO)
+        return response, n_status
 
-
+    @auth.login_required
     def post(self):
         try:
             dados = json.loads(request.data)
-            print(dados)
+            for atributo in dados:
+                dados[atributo] = converter_para_tipo_do_elemento(dados[atributo])
+
+            if type(dados['nome']) != str or type(dados['idade']) != int:
+                raise KeyError
             pessoa = Pessoas(nome=dados['nome'], idade=dados['idade'])
             pessoa.save()
 
@@ -137,7 +173,7 @@ class ListaAtividades(Resource):
 
         return response, n_status
 
-
+    @auth.login_required
     def post(self):
         dados = json.loads(request.data)
         print(dados)

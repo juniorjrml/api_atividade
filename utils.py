@@ -22,6 +22,6 @@ def deleta_pessoa():
 
 
 if __name__ == '__main__':
-    #insere_usuario('juniorjrml', 'aaa')
-    #insere_usuario('jan', 'bbb')
+    insere_usuario('juniorjrml', 'aaa')
+    insere_usuario('jan', 'bbb')
     print(consulta_usuarios())

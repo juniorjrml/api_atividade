@@ -1,6 +1,7 @@
 import requests
 import random
 import json
+import time
 BASE = "http://127.0.0.1:5000/"
 
 
@@ -49,39 +50,45 @@ def exibe_resultado_request(request):
         print("---")
     print()
 
-
-
-for entrada in dados_entrada_pessoa:
-    print(entrada)
-    jsons = json.dumps(entrada)
-
-    # Caso n tenha o campo nome coloca em uma rota existente para testar
-    try:
-        nome = str(entrada["nome"])
-    except:
-        nome = "juniorJRML"  # nome existente no bd
-    resultado = requests.post(BASE_PESSOA, jsons)
-    exibe_resultado_request(resultado)
-
+tempo_espera = 0.2
+usuarios = [('juniorjrml', 'aaa'), ("qualquercoisa", "tntfaz")]
+for usuario in usuarios:
     resultado = requests.get(BASE_PESSOA)
     exibe_resultado_request(resultado)
+    print("#"*50)
+    print(usuario)
+    for entrada in dados_entrada_pessoa:
+        print(entrada)
 
-    resultado = requests.put(BASE_PESSOA+nome, jsons)
-    exibe_resultado_request(resultado)
 
-    resultado = requests.patch(BASE_PESSOA+nome, jsons)
-    exibe_resultado_request(resultado)
+        # Caso n tenha o campo nome  existente para testar
+        try:
+            nome = str(entrada["nome"])
+            jsons = json.dumps(entrada)
+        except:
+            nome = ""
+            jsons = {}
 
-    resultado = requests.get(BASE_PESSOA+nome)
-    exibe_resultado_request(resultado)
 
-    resultado = requests.delete(BASE_PESSOA+nome)
-    exibe_resultado_request(resultado)
+        resultado = requests.post(BASE_PESSOA, jsons, auth=usuario)
+        time.sleep(tempo_espera)
+        exibe_resultado_request(resultado)
 
-    resultado = requests.get(BASE_PESSOA+nome)
-    exibe_resultado_request(resultado)
+        resultado = requests.put(BASE_PESSOA+nome, jsons, auth=usuario)
+        time.sleep(tempo_espera)
+        exibe_resultado_request(resultado)
 
-    resultado = requests.get(BASE_PESSOA)
-    exibe_resultado_request(resultado)
+        resultado = requests.get(BASE_PESSOA+nome)
+        time.sleep(tempo_espera)
+        exibe_resultado_request(resultado)
 
-    print("*"*20)
+        resultado = requests.delete(BASE_PESSOA+nome, auth=usuario)
+        time.sleep(tempo_espera)
+        exibe_resultado_request(resultado)
+
+        resultado = requests.get(BASE_PESSOA+nome)
+        time.sleep(tempo_espera)
+        exibe_resultado_request(resultado)
+
+        print("*"*20)
+
